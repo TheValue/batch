@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.values.batch.main.persistence.MainMapper">
+
+	<select id="findToday" resultType="hashmap" parameterType="hashmap">
+		SELECT DATE_FORMAT(NOW(), '%Y-%m-%d') AS STD_DATE
+		 ,  DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -1 day), '%Y-%m-%d') AS PRE_DATE
+		 ,  DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -30 day), '%Y-%m-%d') AS PRE_DATE2
+		 ,  DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -7 day), '%Y-%m-%d %T') AS FULL_STD_DATE
+		 , (SELECT DATE_FORMAT(MAX(STD_DATE), '%Y-%m-%d') FROM KVALUE.`SPO_KOFIA_BOND`) AS PREV_DATE 
+		 , DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -1 day), '%Y%m%d') AS YESTERDAY
+	</select>
+	
+	<select id="findBatchList" resultType="hashmap" parameterType="hashmap">
+		SELECT A.LOG_TYPE 
+	       , B.LOG_RESULT
+	       , B.LOG_MSG
+	       , B.LOG_CNT
+	       , DATE_FORMAT(INPUT_DATETIME, '%Y-%m-%d') AS `date`
+	       , CONCAT(A.LOG_TYPE, ' (', B.LOG_RESULT, ') ', '\n', B.LOG_MSG) AS `title`
+	       , A.TYPE_COLOR AS `color`
+	    FROM (
+	    	SELECT DISTINCT LOG_TYPE 
+	    	     , CASE WHEN LOG_TYPE = 'DART - 기업공시코드' THEN '#ff665b'
+	    	            WHEN LOG_TYPE = 'DART - 메짜닌정보' THEN '#dc143c'
+	    	            WHEN LOG_TYPE = '크롤링 - 커브정보' THEN '#003458'
+	    	            WHEN LOG_TYPE = '공공 - 주식정보' THEN '#0099a4'
+	    	            WHEN LOG_TYPE = '공공 - 채권정보' THEN '#525252'
+	    	            WHEN LOG_TYPE = '공공 - 지수시세' THEN '#8977ad'
+	    	       END AS TYPE_COLOR
+	 		  FROM KVALUE.SPO_DATA_BATCH_LOG 
+	    ) A 
+	    LEFT OUTER JOIN (
+	    	SELECT *
+			  FROM KVALUE.SPO_DATA_BATCH_LOG 
+			 WHERE 1=1
+			 GROUP BY LOG_TYPE, DATE_FORMAT(INPUT_DATETIME, '%Y-%m-%d')
+	    ) B
+	    ON A.LOG_TYPE = B.LOG_TYPE
+	 WHERE 1=1
+	   AND B.LOG_RESULT IS NOT NULL
+	</select>
+	
+	<insert id="saveBatchLog" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_BATCH_LOG (
+			  IDX
+			, LOG_TYPE
+			, LOG_RESULT
+			, LOG_MSG
+			, LOG_CNT
+			, INPUT_DATETIME
+        )
+		VALUES (
+			  UUID()
+			, #{LOG_TYPE}
+			, #{LOG_RESULT}
+			, #{LOG_MSG}
+			, #{LOG_CNT}
+			, SYSDATE()
+		)
+	</insert>
+	
+	<delete id="saveOpenBondInfoRemove" parameterType="hashmap">
+		DELETE 
+		  FROM KVALUE.SPO_DATA_BOND_INFO
+		 WHERE 1=1
+		   AND REPLACE(STD_DATE, '-', '') = REPLACE(#{STD_DATE}, '-', '')
+	</delete>
+
+	<insert id="saveOpenBondInfo" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_BOND_INFO ( 
+			  IDX
+			, STD_DATE
+			, ISIN
+			, ITEM_NAME
+			, ISSUER
+			, CRNO
+			, MARKET
+			, RANK
+			, ISSUE_DATE
+			, EXP_DATE
+			, BOND_TYPE
+			, AMT
+			, REMAIN_AMT
+			, COUPON
+			, COUPON_TYPE
+			, COUPON_TYPE_CODE
+			, COUPON_CYCLE
+			, COUPON_DT
+			, PAY_TYPE
+			, COMPOUND
+			, MAZZ_YN
+			, OPTION_DESC
+			, CURRENCY
+			, INPUT_DATETIME
+        )
+	    VALUES
+	    <foreach item="item" index="index" collection="list" open="" separator="," close="">
+			(
+				   UUID()
+				 , #{item.STD_DATE}
+				 , #{item.ISIN}
+				 , #{item.ITEM_NAME}
+				 , #{item.ISSUER}
+				 , #{item.CRNO}
+				 , #{item.MARKET}
+				 , #{item.RANK}
+				 , #{item.ISSUE_DATE}
+				 , #{item.EXP_DATE}
+				 , #{item.BOND_TYPE}
+				 , #{item.AMT}
+				 , #{item.REMAIN_AMT}
+				 , #{item.COUPON}
+				 , #{item.COUPON_TYPE}
+				 , #{item.COUPON_TYPE_CODE}
+				 , #{item.COUPON_CYCLE}
+				 , #{item.COUPON_DT}
+				 , #{item.PAY_TYPE}
+				 , #{item.COMPOUND}
+				 , #{item.MAZZ_YN}
+				 , #{item.OPTION_DESC}
+				 , #{item.CURRENCY}
+	      	     , SYSDATE()
+			 )
+		</foreach>
+	</insert>
+	
+	<delete id="saveOpenStockInfoRemove" parameterType="hashmap">
+		DELETE 
+		  FROM KVALUE.SPO_DATA_STOCK_INFO
+		 WHERE 1=1
+		   AND REPLACE(STD_DATE, '-', '') = REPLACE(#{STD_DATE}, '-', '')
+		   AND TICKER_TYPE = 'STOCK'
+	</delete>
+	
+	<insert id="saveOpenStockInfo" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_STOCK_INFO ( IDX
+	                             , TICKER
+	                             , CODE_NAME
+	                             , STD_DATE
+	                             , TICKER_TYPE
+	                             , INDEX_INFO
+	                             , INPUT_DATETIME
+	                             )
+	    VALUES
+	    <foreach item="item" index="index" collection="list" open="" separator="," close="">
+			(
+				   UUID()
+				 , #{item.TICKER}
+				 , #{item.CODE_NAME}
+			     , #{item.STD_DATE}
+			     , #{item.TICKER_TYPE}
+			     , #{item.INDEX_INFO}
+	      	     , SYSDATE()
+			 )
+		</foreach>
+	</insert>
+	
+	<delete id="saveOpenKosInfoRemove" parameterType="hashmap">
+		DELETE 
+		  FROM KVALUE.SPO_DATA_KOS_INFO
+		 WHERE 1=1
+		   AND REPLACE(STD_DATE, '-', '') = REPLACE(#{STD_DATE}, '-', '')
+	</delete>
+	
+	<insert id="saveOpenKosInfo" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_KOS_INFO ( IDX
+	                             , TICKER
+	                             , CODE_NAME
+	                             , STD_DATE
+	                             , TICKER_TYPE
+	                             , INDEX_INFO
+	                             , INPUT_DATETIME
+	                             )
+	    VALUES
+	    <foreach item="item" index="index" collection="list" open="" separator="," close="">
+			(
+				   UUID()
+				 , (SELECT CODE_ID 
+				      FROM KVALUE.BAS_M_CODE
+				     WHERE 1=1
+				       AND META_ID = 'TICKER_INFO'
+				       AND CODE_NAME = #{item.CODE_NAME}
+				       AND REF_CODE1 = #{item.TICKER_TYPE})
+				 , #{item.CODE_NAME}
+			     , #{item.STD_DATE}
+			     , #{item.TICKER_TYPE}
+			     , #{item.INDEX_INFO}
+	      	     , SYSDATE()
+			 )
+		</foreach>
+	</insert>
+	
+	<insert id="saveInsertKofiaHeaderList" parameterType="hashmap">
+		CALL KVALUE.USP_KOFIA_HEADER_INS ( #{STD_DATE}, #{ATTR_CD}, #{REMAIN_TRM_CTGY}, #{REMAIN_TRM_ENG}, #{TERM} )
+	</insert>
+	
+	<insert id="saveInsertKofiaBondList" parameterType="hashmap">
+		CALL KVALUE.USP_KOFIA_BOND_INS ( #{STD_DATE}, #{REPORT_COMP_CD}, #{SIGA_BRN_CD}, #{IDX}, #{LARGE_CATEGORY_MRK}, #{TYPE_NM_MRK}, #{CREDIT_RNK_MRK}, #{VAL1}, #{VAL2}, #{VAL3}, #{VAL4}, #{VAL5}, #{VAL6}, #{VAL7}, #{VAL8}, #{VAL9}, #{VAL10}, #{VAL11}, #{VAL12}, #{VAL13}, #{VAL14}, #{VAL15}, #{VAL16}, #{VAL17}, #{VAL18}, #{VAL19}, #{VAL20} )
+	</insert>
+	
+	<delete id="saveOpenDartMazzCodeRemove" parameterType="hashmap">
+		DELETE 
+		  FROM KVALUE.SPO_DATA_MAZZ_CODE
+		 WHERE 1=1
+	</delete>
+	
+	<insert id="saveOpenDartMazzCode" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_MAZZ_CODE ( IDX
+	                             , CORP_CODE
+	                             , CORP_NAME
+	                             , STOCK_CODE
+	                             , MODIFY_DATE
+	                             , INPUT_DATETIME
+	                             )
+	    VALUES
+	    <foreach item="item" index="index" collection="list" open="" separator="," close="">
+			(
+				   UUID()
+				 , #{item.CORP_CODE}
+			     , #{item.CORP_NAME}
+			     , #{item.STOCK_CODE}
+			     , #{item.MODIFY_DATE}
+	      	     , SYSDATE()
+			 )
+		</foreach>
+	</insert>
+	
+	<select id="findOpenDataBondInfo" resultType="hashmap" parameterType="hashmap">
+		SELECT IDX
+		     , STD_DATE  
+		     , ITEM_NAME 
+		     , ISSUER 
+		     , ISSUE_DATE 
+		     , MAZZ_YN 
+		     , SUBSTR(ISSUE_DATE, 1, 4) AS YYYY
+		  FROM KVALUE.SPO_DATA_BOND_INFO 
+		 WHERE 1=1
+		   AND MAZZ_YN IN ('비분리형BW', 'CB', '분리형BW', 'EB')
+		   AND REPLACE(STD_DATE, '-', '') = REPLACE(#{STD_DATE}, '-', '')
+		 GROUP BY ISSUER, MAZZ_YN, SUBSTR(ISSUE_DATE, 1, 4)
+	</select>
+	
+	<select id="findOpenDartMazzCode" resultType="hashmap" parameterType="hashmap">
+		SELECT CORP_CODE
+		  FROM KVALUE.SPO_DATA_MAZZ_CODE 
+		 WHERE 1=1
+		   AND CORP_NAME = #{ISSUER}
+	</select>
+	
+	<delete id="saveOpenDartMazzInfoRemove" parameterType="hashmap">
+		DELETE 
+		  FROM KVALUE.SPO_DATA_MAZZ_INFO
+		 WHERE 1=1
+	</delete>
+	
+	<insert id="saveOpenDartMazzInfo" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_MAZZ_INFO ( IDX
+	                             , CORP_NAME
+	                             , BOND_KIND
+	                             , BOND_TM
+	                             , BOND_AMOUNT
+	                             , DUE_DATE
+	                             , PAY_DATE
+	                             , COUPON
+	                             , YTM
+	                             , BOND_METHOD
+	                             , RATIO
+	                             , PRICE
+	                             , START_DATE
+	                             , END_DATE
+	                             , REFIX_FLOOR
+	                             , REFIX_FLOOR_BS
+	                             , CV_KIND
+	                             , INPUT_DATETIME
+	                             )
+	    VALUES
+	    <foreach item="item" index="index" collection="list" open="" separator="," close="">
+			(
+				   UUID()
+				 , #{item.CORP_NAME}
+			     , #{item.BOND_KIND}
+			     , #{item.BOND_TM}
+			     , #{item.BOND_AMOUNT}
+			     , #{item.DUE_DATE}
+			     , #{item.PAY_DATE}
+			     , #{item.COUPON}
+			     , #{item.YTM}
+			     , #{item.BOND_METHOD}
+			     , #{item.RATIO}
+			     , #{item.PRICE}
+			     , #{item.START_DATE}
+			     , #{item.END_DATE}
+			     , #{item.REFIX_FLOOR}
+			     , #{item.REFIX_FLOOR_BS}
+			     , #{item.CV_KIND}
+	      	     , SYSDATE()
+			 )
+		</foreach>
+	</insert>
+	
+</mapper>
