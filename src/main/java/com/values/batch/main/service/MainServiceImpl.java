@@ -30,6 +30,7 @@ import com.values.batch.main.util.DartDataMazzInfo;
 import com.values.batch.main.util.OpenDataBondInfo;
 import com.values.batch.main.util.OpenDataKosInfo;
 import com.values.batch.main.util.OpenDataStockPrice;
+import com.values.batch.main.util.OpenSeibroMazzInfo;
 
 @Service
 @Transactional
@@ -674,8 +675,69 @@ public class MainServiceImpl implements MainService {
 		
 		paramMap.put("list", saveList);
 		
-		mainMapper.saveOpenDartMazzInfoRemove(paramMap);
-		mainMapper.saveOpenDartMazzInfo(paramMap);
+		if(totalCnt > 0) {
+			mainMapper.saveOpenDartMazzInfoRemove(paramMap);
+			mainMapper.saveOpenDartMazzInfo(paramMap);
+		}
+		
+		resultMap = resultMsg(true, stdDate + " 기준 : " + totalCnt + " 건 저장 완료", totalCnt);
+		resultMap.put("TOTAL_CNT", saveList.size());
+		
+		return resultMap;
+	}
+	
+	@Override
+	public Map<String, Object> saveOpenSeibroMazzInfo(Map<String, Object> params) {
+		// 세이브로 데이터 파싱 필요
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		
+		// 직전일 조회 
+		List<Map<String, Object>> date = mainMapper.findToday(params);
+		String stdDate = "";
+				
+		if(date.size() > 0) {
+			stdDate = (String) date.get(0).get("PREV_DATE");
+			stdDate = stdDate.replaceAll("-", "");
+		}
+		
+		// test 
+		stdDate = "20230208";
+		
+		// 채권발행정보 리스트 조회 
+		params.put("STD_DATE", stdDate);
+		List<Map<String, Object>> bondList = mainMapper.findOpenDataBondInfo(params);
+		System.out.println("bondList : " + bondList.size());
+		
+		// 조회된 발행정보 리스트 만큼 
+		// ISIN 코드로 세이브로 데이터 가져오기
+		int totalCnt = 0;
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		List<Map<String, Object>> saveList = new ArrayList<Map<String, Object>>();
+		for(Map<String, Object> item : bondList) {
+			String isinCode = (String) item.get("ISIN");
+			OpenSeibroMazzInfo openSeibroMazzInfo = new OpenSeibroMazzInfo();
+			List<Map<String, Object>> resultList = openSeibroMazzInfo.getOpenSeibroMazzInfo(isinCode, "", false);
+			
+			for(Map<String, Object> map : resultList) {
+				boolean result = false;
+				
+				if(map.get("result") != null) {
+					result = (boolean) map.get("result");
+				}
+				
+				if(result) {
+					saveList.add(map);
+					totalCnt++;
+				}
+			}
+		}
+		
+		paramMap.put("list", saveList);
+		
+		if(totalCnt > 0) {
+			mainMapper.saveOpenSeibroMazzInfoRemove(paramMap);
+			mainMapper.saveOpenSeibroMazzInfo(paramMap);
+		}
 		
 		resultMap = resultMsg(true, stdDate + " 기준 : " + totalCnt + " 건 저장 완료", totalCnt);
 		resultMap.put("TOTAL_CNT", saveList.size());

@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,11 +52,11 @@ public class MainController {
 	
 	// 스케줄링
 	// 공공데이터포털 - 발행채권정보 
-	// 데일리 배치 - 1일 1회 (오전 1시)
+	// 데일리 배치 - 1일 1회 (오전 4시)
 	// SPO_DATA_BOND_INFO
-	@Scheduled(cron = "0 0 1 * * ?")
+	@Scheduled(cron = "0 0 4 * * ?")
 	public void scheduleOpenDataBondInfo() {
-	    System.out.println("새벽 1시 배치 - scheduleOpenDataBondInfo 시작");
+	    System.out.println("새벽 4시 배치 - scheduleOpenDataBondInfo 시작");
 	    
 	    // 발행채권정보 데이터 추출 및 저장
 	    Map<String, Object> params = new HashMap<String, Object>();
@@ -126,11 +125,12 @@ public class MainController {
 	
 	// 스케줄링
 	// DART - DART 기업 공기정보 기업코드 정보 데이터 크롤링
-	// 데일리 배치 - 1일 1회 (오전 3시)
+	// 데일리 배치 - 1일 1회 (오전 6시)
 	// SPO_DATA_MAZZ_CODE
-	@Scheduled(cron = "0 0 3 * * ?")
+	// findOpenDataBondInfo 메소드를 사용하므로 scheduleOpenDataBondInfo 메소드보다 뒷 시간으로 배치가 진행되어야 함
+	@Scheduled(cron = "0 0 6 * * ?")
 	public void scheduleOpenDartMazzCode() {
-	    System.out.println("오전 3시 배치 - scheduleOpenDartMazzCode 시작");
+	    System.out.println("오전 6시 배치 - scheduleOpenDartMazzCode 시작");
 	    
 	    // DART 기업 공시코드 조회 
 	    Map<String, Object> params = new HashMap<String, Object>();
@@ -139,16 +139,17 @@ public class MainController {
 	    // 결과 로그 기록
 	    result.put("LOG_TYPE", "DART - 기업공시코드");
 	    mainService.saveBatchLog(result);
-	    System.out.println("오전 3시 배치 - scheduleOpenDartMazzCode 종료");
+	    System.out.println("오전 6시 배치 - scheduleOpenDartMazzCode 종료");
 	}
 	
 	// 스케줄링
 	// DART - DART 메짜닌 발행정보 데이터 크롤링
-	// 데일리 배치 - 1일 1회 (오전 6시)
+	// 데일리 배치 - 1일 1회 (오전 6시 30분)
 	// SPO_DATA_MAZZ_INFO
-	@Scheduled(cron = "0 0 6 * * ?")
+	// findOpenDataBondInfo 메소드를 사용하므로 scheduleOpenDataBondInfo 메소드보다 뒷 시간으로 배치가 진행되어야 함
+	@Scheduled(cron = "0 30 6 * * ?")
 	public void scheduleOpenDartMazzInfo() {
-	    System.out.println("오전 6시 배치 - scheduleOpenDartMazzInfo 시작");
+	    System.out.println("오전 6시 30분 배치 - scheduleOpenDartMazzInfo 시작");
 	    
 	    // DART 기업 메짜닌정보 조회
 	    Map<String, Object> params = new HashMap<String, Object>();
@@ -157,6 +158,25 @@ public class MainController {
 	    // 결과 로그 기록
 	    result.put("LOG_TYPE", "DART - 메짜닌정보");
 	    mainService.saveBatchLog(result);
-	    System.out.println("오전 6시 배치 - scheduleOpenDartMazzInfo 종료");
+	    System.out.println("오전 6시 30분 배치 - scheduleOpenDartMazzInfo 종료");
+	}
+	
+	// 스케줄링
+	// SEIBRO - SEIBRO 메짜닌 발행정보 데이터 크롤링
+	// 데일리 배치 - 1일 1회 (오전 6시 45분)
+	// SPO_DATA_SEIBRO_MAZZ_INFO
+	// findOpenDataBondInfo 메소드를 사용하므로 scheduleOpenDataBondInfo 메소드보다 뒷 시간으로 배치가 진행되어야 함
+	@Scheduled(cron = "0 45 6 * * ?")
+	public void scheduleOpenSeibroMazzInfo() {
+	    System.out.println("오전 6시 45분 배치 - scheduleOpenSeibroMazzInfo 시작");
+	    
+	    // DART 기업 메짜닌정보 조회
+	    Map<String, Object> params = new HashMap<String, Object>();
+	    Map<String, Object> result = mainService.saveOpenSeibroMazzInfo(params);
+	    
+	    // 결과 로그 기록
+	    result.put("LOG_TYPE", "SEIBRO - 메짜닌정보");
+	    mainService.saveBatchLog(result);
+	    System.out.println("오전 6시 45분 배치 - scheduleOpenSeibroMazzInfo 종료");
 	}
 }

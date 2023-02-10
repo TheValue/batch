@@ -75,5 +75,15 @@ public interface MainService {
 	 */
 	Map<String, Object> saveOpenDartMazzInfo(Map<String, Object> params);
 	
+	/**
+	 * NAME : saveOpenSeibroMazzInfo
+	 * DESC : SEIBRO API 사용 - BOND 발행정보의 ISIN (KR코드)를 통해 상세 정보를 추출 및 저장
+	 * DATE : 2023-02-08
+	 * TABLE : 
+	 * PARAM : 직전영업일, ISIN 코드
+	 * RETURN : 배치 결과
+	 */
+	Map<String, Object> saveOpenSeibroMazzInfo(Map<String, Object> params);
+	
 	
 }

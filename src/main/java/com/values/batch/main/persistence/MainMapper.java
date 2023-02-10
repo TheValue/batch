@@ -59,5 +59,11 @@ public interface MainMapper {
 	// DART - 메짜닌 발행정보 추출데이터 저장
 	void saveOpenDartMazzInfo(Map<String, Object> param);
 	
+	// SEIBRO - 메짜닌 발행정보(추가 상세 데이터) 전체 삭제 
+	void saveOpenSeibroMazzInfoRemove(Map<String, Object> param);
+	
+	// SEIBRO - 메짜닌 발행정보(추가 상세 데이터) 추출데이터 저장
+	void saveOpenSeibroMazzInfo(Map<String, Object> param);
+	
 	
 }

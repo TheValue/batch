@@ -29,6 +29,7 @@
 	    	            WHEN LOG_TYPE = '공공 - 주식정보' THEN '#0099a4'
 	    	            WHEN LOG_TYPE = '공공 - 채권정보' THEN '#525252'
 	    	            WHEN LOG_TYPE = '공공 - 지수시세' THEN '#8977ad'
+	    	            WHEN LOG_TYPE = 'SEIBRO - 메짜닌정보' THEN '#8f784b'
 	    	       END AS TYPE_COLOR
 	 		  FROM KVALUE.SPO_DATA_BATCH_LOG 
 	    ) A 
@@ -230,6 +231,7 @@
 	
 	<select id="findOpenDataBondInfo" resultType="hashmap" parameterType="hashmap">
 		SELECT IDX
+		     , ISIN
 		     , STD_DATE  
 		     , ITEM_NAME 
 		     , ISSUER 
@@ -297,6 +299,91 @@
 			     , #{item.REFIX_FLOOR_BS}
 			     , #{item.CV_KIND}
 	      	     , SYSDATE()
+			 )
+		</foreach>
+	</insert>
+	
+	<delete id="saveOpenSeibroMazzInfoRemove" parameterType="hashmap">
+		DELETE 
+		  FROM KVALUE.SPO_DATA_SEIBRO_MAZZ_INFO
+		 WHERE 1=1
+	</delete>
+	
+	<insert id="saveOpenSeibroMazzInfo" parameterType="hashmap">
+		INSERT INTO KVALUE.SPO_DATA_SEIBRO_MAZZ_INFO ( IDX
+									, ISIN
+									, KOR_SECN_NM
+									, ISSU_DT
+									, XPIR_DT
+									, FIRST_ISSU_AMT
+									, ISSU_REMA
+									, COUPON_RATE
+									, XPIRED_RATE
+									, RECU_WHCD
+									, PARTICUL_BOND_KIND_TPCD
+									, OPTION_TPCD
+									, FORC_ERLY_RED_YN
+									, MR_CHG_TPCD
+									, GRTY_TPCD
+									, RANK_TPCD
+									, INT_PAY_WAY_TPCD
+									, SINT_CINT_TPCD
+								 	, IRATE_CHG_TPCD
+									, XPIR_GUAR_PRATE
+									, XPIR_GUAR_PRATE_TPCD
+									, PRCP_RED_WHCD
+									, KIS_VALAT_GRD_CD
+									, NICE_VALAT_GRD_CD
+									, SCI_VALAT_GRD_CD
+									, KR_VALAT_GRD_CD
+									, XRC_BEGIN_DT
+									, XRC_EXPRY_DT
+									, ERLY_RED_DT
+									, APLI_IRATE
+									, ERLY_REDAMT_VAL
+									, INT_PAY_AMT
+									, CURR_ISSU_REMA
+									, XRC_RATIO
+									, INPUT_DATETIME
+	                             )
+	    VALUES
+	    <foreach item="item" index="index" collection="list" open="" separator="," close="">
+			(
+				   UUID()
+			    , #{item.ISIN}
+				, #{item.KOR_SECN_NM}
+				, #{item.ISSU_DT}
+				, #{item.XPIR_DT}
+				, #{item.FIRST_ISSU_AMT}
+				, #{item.ISSU_REMA}
+				, #{item.COUPON_RATE}
+				, #{item.XPIRED_RATE}
+				, #{item.RECU_WHCD}
+				, #{item.PARTICUL_BOND_KIND_TPCD}
+				, #{item.OPTION_TPCD}
+				, #{item.FORC_ERLY_RED_YN}
+				, #{item.MR_CHG_TPCD}
+				, #{item.GRTY_TPCD}
+				, #{item.RANK_TPCD}
+				, #{item.INT_PAY_WAY_TPCD}
+				, #{item.SINT_CINT_TPCD}
+				, #{item.IRATE_CHG_TPCD}
+				, #{item.XPIR_GUAR_PRATE}
+				, #{item.XPIR_GUAR_PRATE_TPCD}
+				, #{item.PRCP_RED_WHCD}
+				, #{item.KIS_VALAT_GRD_CD}
+				, #{item.NICE_VALAT_GRD_CD}
+				, #{item.SCI_VALAT_GRD_CD}
+				, #{item.KR_VALAT_GRD_CD}
+				, #{item.XRC_BEGIN_DT}
+				, #{item.XRC_EXPRY_DT}
+				, #{item.ERLY_RED_DT}
+				, #{item.APLI_IRATE}
+				, #{item.ERLY_REDAMT_VAL}
+				, #{item.INT_PAY_AMT}
+				, #{item.CURR_ISSU_REMA}
+				, #{item.XRC_RATIO}
+      	        , SYSDATE()
 			 )
 		</foreach>
 	</insert>
